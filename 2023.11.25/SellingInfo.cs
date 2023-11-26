@@ -72,7 +72,6 @@ namespace DD_PJ
             str += commodity_catagory + "\r\t         ";
             str += platform_name + "\r\t      ";
             str += price + "元";
-
             return str;
         }
     }

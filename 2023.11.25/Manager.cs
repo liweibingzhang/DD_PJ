@@ -112,12 +112,38 @@ namespace DD_PJ
             // 6) 你可以参照此文件中其他函数的写法
             // 7) 请注意类SellingInfo中的字段的类型 和 表selling中的字段的类型！！
             //    这关系到在写命令字符串时 一些字段需不需要用 单引号''包裹
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection("server=localhost;username=root;password=210906;database=PCS;"))
+                {
+                    connection.Open();
+                    using (MySqlCommand command = new MySqlCommand())
+                    {
+                        command.Connection = connection;
+                        // 构造插入语句
+                        command.CommandText = "INSERT INTO selling (commodity_id, seller_id, platform_id, produce_date, shelf_life, produce_address, price, description) " +
+                                              "VALUES (@commodity_id, @seller_id, @platform_id, @produce_date, @shelf_life, @produce_address, @price, @description)";
 
-
-
-
-
-
+                        // 添加参数
+                        command.Parameters.AddWithValue("@commodity_id", sellingInfo.commodity_id);
+                        command.Parameters.AddWithValue("@seller_id", sellingInfo.seller_id);
+                        command.Parameters.AddWithValue("@platform_id", sellingInfo.platform_id);
+                        command.Parameters.AddWithValue("@produce_date", DateTime.Parse(sellingInfo.produce_date));
+                        command.Parameters.AddWithValue("@shelf_life", int.Parse(sellingInfo.shelf_life));
+                        command.Parameters.AddWithValue("@produce_address", sellingInfo.produce_address);
+                        command.Parameters.AddWithValue("@price", decimal.Parse(sellingInfo.price));
+                        command.Parameters.AddWithValue("@description", sellingInfo.description);
+                        // 执行插入操作
+                        command.ExecuteNonQuery();
+                    }
+                }
+                Console.WriteLine("Publish successful!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+            
         }
 
         /// <summary>
