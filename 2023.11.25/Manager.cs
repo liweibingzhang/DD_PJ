@@ -150,26 +150,65 @@ namespace DD_PJ
         /// 更新在售商品信息
         /// </summary>
         /// <param name="sellingInfo">新的在售商品信息</param>
-        public void UpdateSellingInfo(SellingInfo sellingInfo)
-        {
+    public void UpdateSellingInfo(SellingInfo sellingInfo) 
             //情景：商家对自己已发布的商品进行了修改，因此需要在数据库中实现对表selling的更新
-            //Tips：
-            // 1) 参数sellingInfo 是经过商家修改过后的在售商品信息，你要做的是用这些信息更新表selling中旧的信息
-            // 2) 更新需要用到的 参数sellingInfo 里的字段 可以 确保不为空
-            // 3）表selling 的定义见 我于2023.11.24日发送给你的压缩包 中的.sql文件
-            // 4) 类SellingInfo的定义请见 我于2023.11.25日上传至github 的SellingInfo.cs文件
-            // 5) 你在构建字符串时可能会用到string.Format()方法，请自行搜索其用法
-            // 6) 你可以参照此文件中其他函数的写法
-            // 7) 请注意类SellingInfo中的字段的类型 和 表selling中的字段的类型！！
-            //    这关系到在写命令字符串时 一些字段需不需要用 单引号''包裹
+    //Tips：
+    // 1) 参数sellingInfo 是经过商家修改过后的在售商品信息，你要做的是用这些信息更新表selling中旧的信息
+    // 2) 更新需要用到的 参数sellingInfo 里的字段 可以 确保不为空
+    // 3）表selling 的定义见 我于2023.11.24日发送给你的压缩包 中的.sql文件
+    // 4) 类SellingInfo的定义请见 我于2023.11.25日上传至github 的SellingInfo.cs文件
+    // 5) 你在构建字符串时可能会用到string.Format()方法，请自行搜索其用法
+    // 6) 你可以参照此文件中其他函数的写法
+    // 7) 请注意类SellingInfo中的字段的类型 和 表selling中的字段的类型！！
+    //    这关系到在写命令字符串时 一些字段需不需要用 单引号''包裹
+    {
+        try
+        {
+            using (MySqlConnection connection = new MySqlConnection("server=localhost;username=root;password=210906;database=PCS;"))
+            {
+                connection.Open();
+                using (MySqlCommand command = new MySqlCommand())
+                {
+                    command.Connection = connection;
+                    // 构造更新语句
+                    command.CommandText = "UPDATE selling " +
+                                      "SET produce_date = @produce_date, " +
+                                      "    shelf_life = @shelf_life, " +
+                                      "    produce_address = @produce_address, " +
+                                      "    price = @price, " +
+                                      "    description = @description " +
+                                      "WHERE commodity_id = @commodity_id AND seller_id = @seller_id AND platform_id = @platform_id";
 
+                    // 添加参数
+                    command.Parameters.AddWithValue("@produce_date", DateTime.Parse(sellingInfo.produce_date));
+                    command.Parameters.AddWithValue("@shelf_life", int.Parse(sellingInfo.shelf_life));
+                    command.Parameters.AddWithValue("@produce_address", sellingInfo.produce_address);
+                    command.Parameters.AddWithValue("@price", decimal.Parse(sellingInfo.price));
+                    command.Parameters.AddWithValue("@description", sellingInfo.description);
+                    command.Parameters.AddWithValue("@commodity_id", sellingInfo.commodity_id);
+                    command.Parameters.AddWithValue("@seller_id", sellingInfo.seller_id);
+                    command.Parameters.AddWithValue("@platform_id", sellingInfo.platform_id);
 
+                    // 执行更新操作
+                    int rowsAffected = command.ExecuteNonQuery();
 
-
-
-
-
+                    if (rowsAffected > 0)
+                    {
+                        Console.WriteLine("Update successful!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No rows updated. SellingInfo not found in the database.");
+                    }
+                }
+            }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+    }
+
 
         /// <summary>
         /// 获取指定商家在售商品信息
