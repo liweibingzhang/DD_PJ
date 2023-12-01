@@ -549,7 +549,7 @@ namespace DD_PJ
             //返回值：key为横坐标的值 与 value为收藏次数的 字典
             //
             //枚举类型E_RelationType的定义见同文件夹中的InitialPanel.cs
-
+            //by the way 我把数据库里表`collects`的名字改成了`favorite`  (*￣︶￣)
 
 
 
