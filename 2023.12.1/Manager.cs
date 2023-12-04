@@ -448,7 +448,62 @@ namespace DD_PJ
             conn.Close();
         }
 
-        /*/// <summary>
+        // 根据枚举类型获取对应的数据库表字段名
+        private string GetColumnName(E_RelationType xType)
+        {
+            switch (xType)
+            {
+                case E_RelationType.Commodity:
+                    return "`commodity_id`";
+                case E_RelationType.Seller:
+                    return "`seller_id`";
+                case E_RelationType.Platform:
+                    return "`platform_id`";
+                default:
+                    return null;
+            }
+        }
+        /// <summary>
+        /// 统计所有被收藏的商品的分布情况
+        /// </summary>
+        /// <param name="xType">横坐标</param>
+        /// <returns></returns>
+        public Dictionary<string, int> GetFavoritesDistribution(E_RelationType xType)
+        {
+            //情景：管理员要统计所有被收藏的商品的分布情况 他可以以三种方式统计
+            //     (1)横坐标——商品名   纵坐标——收藏次数     就是group by 商品id
+            //     (2)横坐标——商家名   纵坐标——收藏次数     就是group by 商家id
+            //     (3)横坐标——平台名   纵坐标——收藏次数     就是group by 平台id
+            //
+            //返回值：key为横坐标的值 与 value为收藏次数的 字典
+            //
+            //枚举类型E_RelationType的定义见同文件夹中的InitialPanel.cs
+            //by the way 我把数据库里表`collects`的名字改成了`favorite`  (*￣︶￣)
+            string columnName = GetColumnName(xType);
+
+            if (columnName == null)
+            {
+                throw new ArgumentException("Invalid E_RelationType");
+            }
+
+            string cmdStr = "SELECT {columnName}, COUNT(*) FROM `favorite` GROUP BY {columnName}";
+            cmd = new MySqlCommand(cmdStr, conn);
+
+            Dictionary<string, int> result = new Dictionary<string, int>();
+
+            using (MySqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string key = reader[0].ToString();
+                    int count = Convert.ToInt32(reader[1]);
+                    result[key] = count;
+                }
+            }
+            return result;
+            
+        }
+                /*/// <summary>
         /// 加载所有商品的信息
         /// </summary>
         /// <returns></returns>
@@ -532,28 +587,5 @@ namespace DD_PJ
             }
             return dic;
         }*/
-
-
-        /// <summary>
-        /// 统计所有被收藏的商品的分布情况
-        /// </summary>
-        /// <param name="xType">横坐标</param>
-        /// <returns></returns>
-        public Dictionary<string, int> GetFavoritesDistribution(E_RelationType xType)
-        {
-            //情景：管理员要统计所有被收藏的商品的分布情况 他可以以三种方式统计
-            //     (1)横坐标——商品名   纵坐标——收藏次数     就是group by 商品id
-            //     (2)横坐标——商家名   纵坐标——收藏次数     就是group by 商家id
-            //     (3)横坐标——平台名   纵坐标——收藏次数     就是group by 平台id
-            //
-            //返回值：key为横坐标的值 与 value为收藏次数的 字典
-            //
-            //枚举类型E_RelationType的定义见同文件夹中的InitialPanel.cs
-            //by the way 我把数据库里表`collects`的名字改成了`favorite`  (*￣︶￣)
-
-
-
-            return null;
-        }
     }
 }
