@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
-using MySql.Data.MySqlClient;
+using MySql.Data.MySqlClient; 
 
 namespace DD_PJ
 {
@@ -438,6 +438,7 @@ namespace DD_PJ
             cmd = new MySqlCommand(cmdStr, conn);
             cmd.ExecuteNonQuery();
         }
+        
 
         /// <summary>
         /// 用户取消收藏商品的方法
@@ -511,6 +512,76 @@ namespace DD_PJ
             }
             return dict;
         }
+        /// <summary>
+        /// 获取同一类商品的收藏数量
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="timespan"></param>
+        /// <returns></returns>
+        public Dictionary<string, int> GetCollectCountBySeller(int commodityId, int timespan)
+        {
+            Dictionary<string, int> collectCounts = new Dictionary<string, int>();
+            string cmdStr = string.Format("SELECT `seller_id`, COUNT(*) FROM `collects` " +
+                                          "WHERE `commodity_id` = {0} AND DATE_SUB(CURDATE(), INTERVAL {1} DAY) <= date " +
+                                          "GROUP BY `seller_id`",
+                commodityId, timespan);
+            cmd = new MySqlCommand(cmdStr, conn);
+
+            using (MySqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string sellerId = reader[0].ToString();
+                    int count = Convert.ToInt32(reader[1]);
+                    collectCounts.Add(sellerId, count);
+                }
+            }
+
+            return collectCounts;
+        }
+
+        public class FavoriteItem
+        {
+            public decimal? PriceFloor { get; set; }
+        }
+
+        public List<FavoriteItem> GetUserFavorites(int userId)
+        {
+            string cmdStr = "SELECT `price_floor` FROM `collects` WHERE `user_id` = @userId";
+            cmd = new MySqlCommand(cmdStr, conn);
+            cmd.Parameters.AddWithValue("@userId", userId);
+
+            List<FavoriteItem> favorites = new List<FavoriteItem>();
+
+            using (MySqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    FavoriteItem favorite = new FavoriteItem();
+                    if (!reader.IsDBNull(0))
+                    {
+                        favorite.PriceFloor = reader.GetDecimal(0);
+                    }
+                    favorites.Add(favorite);
+                }
+            }
+
+            return favorites;
+        }
+
+        public Tuple<decimal, decimal> CalculatePriceRange(List<FavoriteItem> favorites)
+        {
+            if (favorites.Count == 0)
+            {
+                return null;
+            }
+
+            decimal minPrice = favorites.Min(f => f.PriceFloor ?? decimal.MaxValue);
+            decimal maxPrice = favorites.Max(f => f.PriceFloor ?? decimal.MinValue);
+
+            return Tuple.Create(minPrice, maxPrice);
+        }
+
 
         /// <summary>
         /// 获取某时间段之前该商品最近的价格
