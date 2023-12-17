@@ -521,9 +521,10 @@ namespace DD_PJ
         public Dictionary<string, int> GetCollectCountBySeller(int commodityId, int timespan)
         {
             Dictionary<string, int> collectCounts = new Dictionary<string, int>();
-            string cmdStr = string.Format("SELECT `seller_id`, COUNT(*) FROM `collects` " +
-                                          "WHERE `commodity_id` = {0} AND DATE_SUB(CURDATE(), INTERVAL {1} DAY) <= date " +
-                                          "GROUP BY `seller_id`",
+            string cmdStr = string.Format("SELECT `seller`.`seller_name`, COUNT(*) FROM `collects` " +
+                                  "JOIN `seller` ON `collects`.`seller_id` = `seller`.`ID` " +
+                                  "WHERE `collects`.`commodity_id` = {0} AND DATE_SUB(CURDATE(), INTERVAL {1} DAY) <= `collects`.`date` " +
+                                  "GROUP BY `collects`.`seller_id`",
                 commodityId, timespan);
             cmd = new MySqlCommand(cmdStr, conn);
 
@@ -531,56 +532,47 @@ namespace DD_PJ
             {
                 while (reader.Read())
                 {
-                    string sellerId = reader[0].ToString();
+                    string sellerName = reader[0].ToString();
                     int count = Convert.ToInt32(reader[1]);
-                    collectCounts.Add(sellerId, count);
+                    collectCounts.Add(sellerName, count);
                 }
             }
-
-            return collectCounts;
+        return collectCounts;
         }
+
 
         public class FavoriteItem
         {
             public decimal? PriceFloor { get; set; }
         }
 
-        public List<FavoriteItem> GetUserFavorites(int userId)
+        public Tuple<decimal, decimal> GetUserPriceRange(int userId)
         {
             string cmdStr = "SELECT `price_floor` FROM `collects` WHERE `user_id` = @userId";
             cmd = new MySqlCommand(cmdStr, conn);
             cmd.Parameters.AddWithValue("@userId", userId);
 
-            List<FavoriteItem> favorites = new List<FavoriteItem>();
+            List<decimal?> priceFloors = new List<decimal?>();
 
             using (MySqlDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    FavoriteItem favorite = new FavoriteItem();
                     if (!reader.IsDBNull(0))
                     {
-                        favorite.PriceFloor = reader.GetDecimal(0);
+                        priceFloors.Add(reader.GetDecimal(0));
                     }
-                    favorites.Add(favorite);
                 }
             }
-
-            return favorites;
-        }
-
-        public Tuple<decimal, decimal> CalculatePriceRange(List<FavoriteItem> favorites)
-        {
-            if (favorites.Count == 0)
+            if (priceFloors.Count == 0)
             {
                 return null;
             }
-
-            decimal minPrice = favorites.Min(f => f.PriceFloor ?? decimal.MaxValue);
-            decimal maxPrice = favorites.Max(f => f.PriceFloor ?? decimal.MinValue);
-
+            decimal minPrice = priceFloors.Min() ?? decimal.MaxValue;
+            decimal maxPrice = priceFloors.Max() ?? decimal.MinValue;
             return Tuple.Create(minPrice, maxPrice);
-        }
+}
+
 
 
         /// <summary>
