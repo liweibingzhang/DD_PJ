@@ -540,12 +540,15 @@ namespace DD_PJ
         return collectCounts;
         }
 
-
         public class FavoriteItem
         {
             public decimal? PriceFloor { get; set; }
         }
-
+        /// <summary>
+        /// 获取用户收藏商品的价格区间
+        /// </summary>
+        /// <param name="userid"></param>
+        /// <returns></returns>
         public Tuple<decimal, decimal> GetUserPriceRange(int userId)
         {
             string cmdStr = "SELECT `price_floor` FROM `collects` WHERE `user_id` = @userId";
